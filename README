@@ -41,6 +41,11 @@ perv:start_link(Options) -> ok
 
     See epcap documentation for options.
 
+    Files are written to priv/files/<mime type>.
+
+    A trace file containing the HTTP response is written to priv/tmp.
+
+
 peep:start() -> ok
 
 
