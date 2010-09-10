@@ -1,0 +1,4 @@
+*.[oa]
+*.beam
+*.swp
+deps

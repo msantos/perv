@@ -1,0 +1,65 @@
+
+perv watches the network for web traffic and dumps the content to your
+hard drive. On a hubbed or public wifi network, this includes everyone
+else's web browsing too.
+
+perv is really just a drifnet clone
+(http://www.ex-parrot.com/~chris/driftnet/) written in Erlang but differs
+in that it parses the HTTP response rather than pulling media types out
+of a binary stream.
+
+
+HOW TO BUILD IT
+
+1. Get the source code
+
+git clone git://github.com/msantos/epcap.git
+git clone git://github.com/msantos/perv.git
+
+2. Compile epcap
+
+cd epcap
+make
+
+3. Create a link in the perv directory
+
+cd perv
+mkdir deps
+ln -s ../../epcap .
+
+4. Compile perv
+
+make
+
+
+HOW TO USE IT
+
+perv:start_link() -> ok
+perv:start_link(Options) -> ok
+
+    Types   Options = list()
+
+    See epcap documentation for options.
+
+peep:start() -> ok
+
+
+EXAMPLES
+
+perv includes a very basic web interface:
+
+> peep:start().
+
+Then open a browser: http://localhost:8889/
+
+
+TODO
+
+* handle installing the dependencies, maybe using rebar
+
+* peep is really ugly, fix it
+
+* handle large files, possibly by periodically writing out the buffered
+  data to disk in the fsm
+
+
