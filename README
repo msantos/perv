@@ -13,21 +13,9 @@ HOW TO BUILD IT
 
 1. Get the source code
 
-git clone git://github.com/msantos/epcap.git
 git clone git://github.com/msantos/perv.git
 
-2. Compile epcap
-
-cd epcap
-make
-
-3. Create a link in the perv directory
-
-cd perv
-mkdir deps
-ln -s ../../epcap .
-
-4. Compile perv
+2. Compile perv
 
 make
 
@@ -43,7 +31,25 @@ perv:start_link(Options) -> ok
 
     Files are written to priv/files/<mime type>.
 
-    A trace file containing the HTTP response is written to priv/tmp.
+    A trace file containing the HTTP response is written to priv/tmp. The
+    trace file can be unpacked by using pervon:content/3.
+
+
+pervon:content(Path, Name, Response) -> ok
+
+    Types   Path = string()
+            Name = string()
+            Response = binary()
+
+    "Path" is a directory where the media in the HTTP response will
+    be unpacked.
+
+    "Name" is the suffix prepended to file names. Since the HTTP response
+    can contain many files, the result of erlang:now/0 is appended to the
+    name with the file type as the extension. The file type is derived
+    from the "Content-Type" header.
+
+    "Body" is the HTTP response.
 
 
 peep:start() -> ok
@@ -57,14 +63,22 @@ perv includes a very basic web interface:
 
 Then open a browser: http://localhost:8889/
 
+To unpack the HTTP response:
+
+> {ok, Response} = file:read_file("priv/tmp/192.168.1.100:80-10.11.11.11:4343-1284292665354797.http").
+> pervon:content("/tmp/content_dir", "suffix", Response).
+
 
 TODO
-
-* handle installing the dependencies, maybe using rebar
 
 * peep is really ugly, fix it
 
 * handle large files, possibly by periodically writing out the buffered
   data to disk in the fsm
+    * since the files are buffered, downloading very large files could
+      exhaust the memory and cause the Erlang node to crash
+
+* pervon:content/3 should return a list of binaries, rather than writing
+  them directly to disk
 
 
