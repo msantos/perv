@@ -39,7 +39,7 @@
 start() ->
     case file:make_symlink("../files/image", "priv/www/img") of
         ok -> ok;
-        eexist -> ok
+        {error,eexist} -> ok
     end,
 
     application:start(inets),
