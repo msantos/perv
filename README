@@ -49,7 +49,7 @@ pervon:content(Path, Name, Response) -> ok
     name with the file type as the extension. The file type is derived
     from the "Content-Type" header.
 
-    "Body" is the HTTP response.
+    "Response" is the HTTP response.
 
 
 peep:start() -> ok
@@ -78,7 +78,7 @@ TODO
     * since the files are buffered, downloading very large files could
       exhaust the memory and cause the Erlang node to crash
 
-* pervon:content/3 should return a list of binaries, rather than writing
-  them directly to disk
+* pervon:content/3 should return a list of tuples containing the name,
+  file type and file contents, rather than writing them directly to disk
 
 
