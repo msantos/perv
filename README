@@ -57,6 +57,16 @@ peep:start() -> ok
 
 EXAMPLES
 
+To start sniffing, specify the interface to use:
+
+> perv:start_link([{interface, "eth0"}]).
+
+By default, all traffic on port 80 is captured. If you want to exclude
+your IP address, modify the pcap filter. For example, if you are using
+the device "en1" with an IP address of "192.168.10.11":
+
+> perv:start_link([{interface, "en1"}, {filter, "tcp and port 80 and not 192.168.10.11"}]).
+
 perv includes a very basic web interface:
 
 > peep:start().
@@ -74,11 +84,20 @@ TODO
 * peep is really ugly, fix it
 
 * handle large files, possibly by periodically writing out the buffered
-  data to disk in the fsm
-    * since the files are buffered, downloading very large files could
-      exhaust the memory and cause the Erlang node to crash
+  data to disk in the fsm. Since the files are buffered, downloading
+  very large files can exhaust the memory of the Erlang node, causing
+  it to hang or crash.
 
 * pervon:content/3 should return a list of tuples containing the name,
   file type and file contents, rather than writing them directly to disk
+
+* file chunks are still occassionally dropped (Content-Length
+  header does not match the body size), for example, when playing
+  Flash video. Figure out where this is happening and see if it can be
+  fixed. Might be a regression, since it was working reliably previously.
+
+* since the interface being snooped is known, grab the device's IP
+  address using inet:ifget/2. Provide an option for including/excluding
+  the user's address.
 
 
