@@ -57,23 +57,31 @@ peep:start() -> ok
 
 EXAMPLES
 
-To start sniffing, specify the interface to use:
+* To start sniffing, specify the interface to use:
 
 > perv:start_link([{interface, "eth0"}]).
 
-By default, all traffic on port 80 is captured. If you want to exclude
-your IP address, modify the pcap filter. For example, if you are using
-the device "en1" with an IP address of "192.168.10.11":
+
+* By default, all traffic on port 80 is captured. If you want to exclude
+  your IP address, modify the pcap filter. For example, if you are using
+  the device "en1" with an IP address of "192.168.10.11":
 
 > perv:start_link([{interface, "en1"}, {filter, "tcp and port 80 and not 192.168.10.11"}]).
 
-perv includes a very basic web interface:
+
+* To replay data from a pcap file (for example, captured using tcpdump):
+
+> perv:start_link([{file, "/path/to/file.pcap"}]).
+
+
+* perv includes a very basic web interface:
 
 > peep:start().
 
 Then open a browser: http://localhost:8889/
 
-To unpack the HTTP response:
+
+* To unpack the HTTP response:
 
 > {ok, Response} = file:read_file("priv/tmp/192.168.1.100:80-10.11.11.11:4343-1284292665354797.http").
 > pervon:content("/tmp/content_dir", "suffix", Response).
@@ -100,4 +108,5 @@ TODO
   address using inet:ifget/2. Provide an option for including/excluding
   the user's address.
 
+* add option to enable/disable debug messages and tracing
 
