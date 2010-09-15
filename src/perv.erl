@@ -37,7 +37,6 @@
 -define(SERVER, ?MODULE).
 
 -export([start_link/0, start_link/1]).
--export([session/4]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3]).
 
@@ -69,7 +68,8 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 % Sniffed packet
-handle_info([{pkthdr, _}, {packet, Packet}], #state{c = C} = State) ->
+handle_info([{pkthdr, {_, {caplen, Length}, {len, Length}}}, {packet, Packet}],
+    #state{c = C} = State) ->
     P = epcap_net:decapsulate(Packet),
     C1 = match(P, C),
     {noreply, State#state{c = C1}};
@@ -123,12 +123,6 @@ match([ #ether{},
     Key = {{Saddr, 80}, {Daddr, Dport}},
     case dict:find(Key, Connections) of
         {ok, Pid} ->
-            error_logger:info_report([
-                    {session, perv:session(Saddr, 80, Daddr, Dport)},
-                    {payload_size, byte_size(Payload)},
-                    {rst, RST},
-                    {fin, FIN}
-                ]),
             buf(Pid, SeqNo, Payload, Len - (HL * 4) - (Off * 4)),
             pervon:stop(Pid),
             dict:erase(Key, Connections);
@@ -159,10 +153,6 @@ match([ #ether{},
     Key = {{Saddr, 80}, {Daddr, Dport}},
     case dict:find(Key, Connections) of
         {ok, Pid} ->
-            error_logger:info_report([
-                    {session, perv:session(Saddr, 80, Daddr, Dport)},
-                    {payload_size, byte_size(Payload)}
-                ]),
             buf(Pid, SeqNo, Payload, Len - (HL * 4) - (Off * 4)),
             Connections;
         error ->
@@ -171,12 +161,6 @@ match([ #ether{},
     end;
 match(_, Connections) ->
     Connections.
-
-
-% Established socket ntoa
-session(Saddr, Sport, Daddr, Dport) ->
-    inet_parse:ntoa(Saddr) ++ ":" ++ integer_to_list(Sport) ++ "-" ++
-    inet_parse:ntoa(Daddr) ++ ":" ++ integer_to_list(Dport).
 
 
 % Send the packet payload to the gen_fsm.

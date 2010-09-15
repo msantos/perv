@@ -36,7 +36,7 @@
 % Interface
 -export([start_link/1]).
 -export([buf/3, stop/1]).
--export([content/3]).
+-export([content/3, session/4]).
 -export([filename/4]).
 % States
 -export([perving/2, perving/3, archiving/2]).
@@ -82,6 +82,10 @@ start_link({{Saddr, Sport}, {Daddr, Dport}}) ->
 
 init([{{Saddr, Sport}, {Daddr, Dport}}]) ->
     process_flag(trap_exit, true),
+    error_logger:info_report([
+        {session, start},
+        {connection, session(Saddr, Sport, Daddr, Dport)}
+    ]),
     {ok, perving, #state{
             saddr = Saddr,
             sport = Sport,
@@ -139,11 +143,8 @@ archiving(timeout, #state{
     catch
         throw:Error -> Error;
         Type:_Error -> error_logger:error_report([
-                    {type, Type},
-                    {saddr, Saddr},
-                    {sport, Sport},
-                    {daddr, Daddr},
-                    {dport, Dport}
+                    {session, Type},
+                    {connection, session(Saddr, Sport, Daddr, Dport)}
                 ])
     end,
 
@@ -192,7 +193,6 @@ subtype(Type, "quicktime") -> {Type,"mov"};
 subtype(Type, "x-flv") -> {Type,"flv"};
 
 subtype(Type, Subtype) ->
-    error_logger:info_report([{subtype, Subtype}]),
     case re:run(Subtype, "^[a-zA-Z0-9.+-]{1,128}+$", [{capture, none}]) of
         match -> {Type,Subtype};
         nomatch -> throw([{unsupported, {Type,Subtype}}])
@@ -207,7 +207,13 @@ dump(#state{
         data = Data
     }) ->
     Body = list_to_binary(gb_trees:values(Data)),
-    Name = perv:session(Saddr, Sport, Daddr, Dport),
+    Name = session(Saddr, Sport, Daddr, Dport),
+
+    error_logger:info_report([
+        {session, finished},
+        {connection, session(Saddr, Sport, Daddr, Dport)},
+        {payload_size, byte_size(Body)}
+    ]),
 
     case Debug of
         true ->
@@ -257,4 +263,9 @@ write_content(Filename, Content) ->
     ok = filelib:ensure_dir(Filename),
     ok = file:write_file(Filename, Content).
 
+
+% Established socket ntoa
+session(Saddr, Sport, Daddr, Dport) ->
+    inet_parse:ntoa(Saddr) ++ ":" ++ integer_to_list(Sport) ++ "-" ++
+    inet_parse:ntoa(Daddr) ++ ":" ++ integer_to_list(Dport).
 
