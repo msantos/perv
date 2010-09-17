@@ -231,37 +231,32 @@ content(_Path, _Name, <<>>) ->
 content(Path, Name, Payload) ->
     {ok, {_Version, _Code, _Response, Headers, Body}} = httpc_response:parse([Payload, ?MAXHDRLEN, true]),
 
-    {Hdr, Len, Content, Rest} = case {Headers#http_response_h.'transfer-encoding',
+    {Hdr, Content, Rest} = case {Headers#http_response_h.'transfer-encoding',
             Headers#http_response_h.'content-length'} of
         {"chunked", "-1"} ->
             {ok, {ChunkHdr, Chunk}} = http_chunk:decode(Body, ?MAXCHUNKLEN, ?MAXHDRLEN),
             Headers1 = http_chunk:handle_headers(Headers, ChunkHdr),
             N = list_to_integer(Headers1#http_response_h.'content-length'),
             <<B1:N/bytes, B2/binary>> = Chunk,
-            {Headers1, N, B1, B2};
+            {Headers1, B1, B2};
         {_, "-1"} ->
-            {Headers, byte_size(Body), Body, <<>>};
+            {Headers, Body, <<>>};
         {_, Size} ->
             N = list_to_integer(Size),
             <<B1:N/bytes, B2/binary>> = Body,
-            {Headers, N, B1, B2}
+            {Headers, B1, B2}
     end,
 
-    case Len of
-        0 ->
-            ok;
-        M when M > byte_size(Content) ->
-            throw([{file, truncated}, {length, Len}, {byte_size, byte_size(Content)}]);
-        _ ->
-            {Type, Subtype} = content_type(Hdr#http_response_h.'content-type'),
-            Filename = filename(Path, Type, Name, Subtype),
-            error_logger:info_report([{file, Filename}, {'content-length', Len}, {bytes, byte_size(Content)}]),
-            ok = write_content(Filename, Content)
-    end,
+    {Type, Subtype} = content_type(Hdr#http_response_h.'content-type'),
+    Filename = filename(Path, Type, Name, Subtype),
+    ok = write_content(Filename, Content),
 
     content(Path, Name, Rest).
 
+write_content(_Filename, Content) when byte_size(Content) =:= 0 ->
+    ok;
 write_content(Filename, Content) ->
+    error_logger:info_report([{file, Filename}, {size, byte_size(Content)}]),
     ok = filelib:ensure_dir(Filename),
     ok = file:write_file(Filename, Content).
 
