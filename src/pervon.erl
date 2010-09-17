@@ -128,9 +128,17 @@ perving({data, {SeqNo, Data}}, _From, #state{data = Payload} = State) ->
 perving(stop, _From, State) ->
     {reply, ok, archiving, State, 0}.
 
-perving(timeout, State) ->
-    error_logger:info_report([{timeout, ?TIMEOUT}]),
-    {next_state, archiving, State, 0}.
+perving(timeout, #state{
+        saddr = Saddr,
+        sport = Sport,
+        daddr = Daddr,
+        dport = Dport
+    } = State) ->
+    error_logger:info_report([
+            {session, {timeout, ?TIMEOUT}},
+            {connection, session(Saddr, Sport, Daddr, Dport)}
+        ]),
+    {next_state, archiving, State, 10000}.
 
 archiving(timeout, #state{
         saddr = Saddr,
