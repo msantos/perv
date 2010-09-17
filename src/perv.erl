@@ -151,14 +151,15 @@ match([ #ether{},
         Payload], Connections) ->
 
     Key = {{Saddr, 80}, {Daddr, Dport}},
-    case dict:find(Key, Connections) of
+    {P, C} =  case dict:find(Key, Connections) of
         {ok, Pid} ->
-            buf(Pid, SeqNo, Payload, Len - (HL * 4) - (Off * 4)),
-            Connections;
+            {Pid, Connections};
         error ->
             {ok, Pid} = pervon:start_link(Key),
-            dict:store(Key, Pid, Connections)
-    end;
+            {Pid, dict:store(Key, Pid, Connections)}
+    end,
+    buf(P, SeqNo, Payload, Len - (HL * 4) - (Off * 4)),
+    C;
 match(_, Connections) ->
     Connections.
 
