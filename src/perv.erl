@@ -44,7 +44,7 @@
         c   % monitored connections
     }).
 
--define(EPCAP_DEFAULT_ARG, [{filter, "tcp and port 80"},
+-define(EPCAP_DEFAULT_ARG, [{filter, "tcp and src port 80"},
                 {interface, "wlan0"},
                 {promiscuous, true},
                 {chroot, "priv/tmp"}]).
