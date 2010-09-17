@@ -53,5 +53,7 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
+    {ok, { {one_for_one, 5, 10}, [
+                {tag1, {perv, start_link, []}, permanent, 10000, worker, [perv]}
+            ]} }.
 
