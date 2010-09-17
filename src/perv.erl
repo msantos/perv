@@ -36,6 +36,7 @@
 
 -define(SERVER, ?MODULE).
 
+-export([start/0, start/1, stop/0]).
 -export([start_link/0, start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3]).
@@ -50,6 +51,14 @@
                 {chroot, "priv/tmp"}]).
 
 
+start() ->
+    start_link().
+start(EpcapArg) ->
+    start_link(EpcapArg).
+
+stop() ->
+    gen_server:call(?SERVER, [stop]).
+
 start_link() ->
     start_link([]).
 
@@ -61,6 +70,10 @@ init([EpcapArg]) ->
     {ok, #state{c = dict:new()}}.
 
 
+handle_call(stop, _From, #state{c = C} = State) ->
+    epcap:stop(),
+    [ pervon:stop(V) || {_,V} <- dict:to_list(C) ],
+    {stop, shutdown, ok, State};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 

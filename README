@@ -22,8 +22,8 @@ make
 
 HOW TO USE IT
 
-perv:start_link() -> ok
-perv:start_link(Options) -> ok
+perv:start() -> ok
+perv:start(Options) -> ok
 
     Types   Options = list()
 
@@ -59,19 +59,19 @@ EXAMPLES
 
 * To start sniffing, specify the interface to use:
 
-> perv:start_link([{interface, "eth0"}]).
+> perv:start([{interface, "eth0"}]).
 
 
 * By default, all traffic on port 80 is captured. If you want to exclude
   your IP address, modify the pcap filter. For example, if you are using
   the device "en1" with an IP address of "192.168.10.11":
 
-> perv:start_link([{interface, "en1"}, {filter, "tcp and port 80 and not 192.168.10.11"}]).
+> perv:start([{interface, "en1"}, {filter, "tcp and port 80 and not 192.168.10.11"}]).
 
 
 * To replay data from a pcap file (for example, captured using tcpdump):
 
-> perv:start_link([{file, "/path/to/file.pcap"}]).
+> perv:start([{file, "/path/to/file.pcap"}]).
 
 
 * perv includes a very basic web interface:
@@ -98,11 +98,6 @@ TODO
 
 * pervon:content/3 should return a list of tuples containing the name,
   file type and file contents, rather than writing them directly to disk
-
-* file chunks are still occassionally dropped (Content-Length
-  header does not match the body size), for example, when playing
-  Flash video. Figure out where this is happening and see if it can be
-  fixed. Might be a regression, since it was working reliably previously.
 
 * since the interface being snooped is known, grab the device's IP
   address using inet:ifget/2. Provide an option for including/excluding
