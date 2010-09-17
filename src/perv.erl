@@ -37,6 +37,8 @@
 -define(SERVER, ?MODULE).
 
 -export([start/0, start/1, stop/0]).
+-export([dev/0]).
+-export([getip/1]).
 -export([start_link/0, start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3]).
@@ -46,15 +48,14 @@
     }).
 
 -define(EPCAP_DEFAULT_ARG, [{filter, "tcp and src port 80"},
-                {interface, "wlan0"},
                 {promiscuous, true},
                 {chroot, "priv/tmp"}]).
 
 
 start() ->
     start_link().
-start(EpcapArg) ->
-    start_link(EpcapArg).
+start(Options) ->
+    start_link(Options).
 
 stop() ->
     gen_server:call(?SERVER, [stop]).
@@ -62,11 +63,20 @@ stop() ->
 start_link() ->
     start_link([]).
 
-start_link(EpcapArg) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [EpcapArg], []).
+start_link(Options) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Options], []).
 
-init([EpcapArg]) ->
-    epcap:start(EpcapArg ++ ?EPCAP_DEFAULT_ARG),
+init([Options]) ->
+    {Dev, Address} = dev(),
+
+    EpcapArgs = case Options of
+        exclude ->
+            [{filter, "tcp and src port 80 and not host " ++ inet_parse:ntoa(Address)}];
+        Opt when is_list(Opt) ->
+            Options
+    end,
+
+    epcap:start(EpcapArgs ++ [{interface, Dev}] ++ ?EPCAP_DEFAULT_ARG),
     {ok, #state{c = dict:new()}}.
 
 
@@ -198,4 +208,19 @@ buf(Pid, SeqNo, Payload, PayloadSize) when PayloadSize < byte_size(Payload) ->
     error_logger:info_report([{truncating, SeqNo}, {from, byte_size(Payload)}, {to, PayloadSize}]),
     pervon:buf(Pid, SeqNo, <<Payload:PayloadSize/bytes>>).
 
+
+% Try to autostupidly figure out the local host's network device.
+% Guaranteed to annoy.
+dev() ->
+    {ok, Devs} = inet:getiflist(),
+    Ifs = [ {N, getip(N)} || N <- Devs ],
+    hd(lists:filter(
+        fun ({_, {127,_,_,_}}) -> false;
+            ({_, {169,_,_,_}}) -> false;
+            ({_, {_,_,_,_}}) -> true
+        end, Ifs)).
+
+getip(Dev) ->
+    {ok, Addr} = inet:ifget(Dev, [addr]),
+    proplists:get_value(addr, Addr).
 

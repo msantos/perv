@@ -25,11 +25,26 @@ HOW TO USE IT
 perv:start() -> ok
 perv:start(Options) -> ok
 
-    Types   Options = list()
+    Types   Options = [EpcapArgs | Keyword]
+            EpcapArgs = list()
+            Keyword = [exclude]
 
     See epcap documentation for options.
 
-    Files are written to priv/files/<mime type>.
+    perv will try to find the default interface to snoop (and will
+    probably get it wrong if there is more than one network interface). To
+    exclude the local host from packet dumps, use:
+
+    > perv:start(exclude).
+
+    To override the defaults, manually specify the device using the
+    epcap options, e.g.:
+
+    > perv:start([
+            {interface, "eth0"},
+            {filter, "tcp and src port 80 and not host 10.11.11.11"}]).
+
+    Content is written to priv/files/<mime type>.
 
     A trace file containing the HTTP response is written to priv/tmp. The
     trace file can be unpacked by using pervon:content/3.
@@ -98,10 +113,6 @@ TODO
 
 * pervon:content/3 should return a list of tuples containing the name,
   file type and file contents, rather than writing them directly to disk
-
-* since the interface being snooped is known, grab the device's IP
-  address using inet:ifget/2. Provide an option for including/excluding
-  the user's address.
 
 * add option to enable/disable debug messages and tracing
 
