@@ -160,6 +160,8 @@ filename(Path, Type, Name, Subtype) ->
     integer_to_list(A) ++ integer_to_list(B) ++ integer_to_list(C) ++
     "." ++ Subtype.
 
+content_type(undefined) ->
+    {"text", "txt"};
 content_type(String) ->
     type(hd(string:tokens(String, ";"))).
 
