@@ -239,10 +239,9 @@ content(_Path, _Name, <<>>) ->
 content(Path, Name, Payload) ->
     {ok, {_Version, Code, _Response, Headers, Body}} = httpc_response:parse([Payload, ?MAXHDRLEN, true]),
 
-    {Hdr, Content, Rest} = case {Headers#http_response_h.'transfer-encoding',
-            Headers#http_response_h.'content-length'} of
+    {Hdr, Content, Rest} = case Headers#http_response_h.'content-length' of
 
-        {"chunked", "-1"} ->
+        "-1" when Headers#http_response_h.'transfer-encoding' == "chunked" ->
             {ok, {ChunkHdr, Chunk}} = http_chunk:decode(Body, ?MAXCHUNKLEN, ?MAXHDRLEN),
             Headers1 = http_chunk:handle_headers(Headers, ChunkHdr),
             N = list_to_integer(Headers1#http_response_h.'content-length'),
@@ -252,15 +251,15 @@ content(Path, Name, Payload) ->
         % Some servers do not send a Content-Length header when replying with a
         % "304 Not Modified" response in a persistent connection. 304 responses
         % cannot have a body (see RFC 2616).
-        {_, "-1"} when Code =:= 304 ->
+        "-1" when Code =:= 304 ->
             {Headers, <<>>, Body};
 
         % No Content-Length header; the end of response is indicated by closing
         % the socket
-        {_, "-1"} ->
+        "-1" ->
             {Headers, Body, <<>>};
 
-        {_, Size} ->
+        Size ->
             N = list_to_integer(Size),
             <<B1:N/bytes, B2/binary>> = Body,
             {Headers, B1, B2}
