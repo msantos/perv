@@ -205,7 +205,7 @@ subtype(Type, "x-flv") -> {Type,"flv"};
 subtype(Type, Subtype) ->
     case re:run(Subtype, "^[a-zA-Z0-9.+-]{1,128}+$", [{capture, none}]) of
         match -> {Type,Subtype};
-        nomatch -> throw([{unsupported, {Type,Subtype}}])
+        nomatch -> {Type,"warning-unsupported-subtype"}
     end.
 
 dump(#state{
