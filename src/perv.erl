@@ -37,8 +37,7 @@
 -define(SERVER, ?MODULE).
 
 -export([start/0, start/1, stop/0]).
--export([dev/0]).
--export([getip/1]).
+-export([dev/0, getip/1]).
 -export([start_link/0, start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3]).
@@ -58,7 +57,7 @@ start(Options) ->
     start_link(Options).
 
 stop() ->
-    gen_server:call(?SERVER, [stop]).
+    gen_server:call(?SERVER, stop).
 
 start_link() ->
     start_link([]).
@@ -80,12 +79,8 @@ init([Options]) ->
     {ok, #state{c = dict:new()}}.
 
 
-handle_call(stop, _From, #state{c = C} = State) ->
-    epcap:stop(),
-    [ pervon:stop(V) || {_,V} <- dict:to_list(C) ],
-    {stop, shutdown, ok, State};
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -114,7 +109,9 @@ handle_info(Info, State) ->
     error_logger:error_report([{wtf, Info}]),
     {noreply, State}.
 
-terminate(_Reason, _State) ->
+terminate(_Reason, #state{c = C}) ->
+    epcap:stop(),
+    dict:map(fun(_K,V) -> pervon:stop(V) end, C),
     ok.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
