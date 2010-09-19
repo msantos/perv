@@ -39,7 +39,7 @@
 -export([content/3, session/4]).
 -export([filename/4]).
 % States
--export([perving/2, perving/3, archiving/2]).
+-export([perving/2, perving/3]).
 % Behaviours
 -export([init/1, handle_event/3, handle_sync_event/4,
         handle_info/3, terminate/3, code_change/4]).
@@ -104,8 +104,21 @@ handle_sync_event(_Event, _From, StateName, State) ->
 handle_info(_Info, StateName, State) ->
     {next_state, StateName, State}.
 
-terminate(_Reason, _StateName, _State) ->
-    ok.
+terminate(_Reason, _StateName, #state{
+        saddr = Saddr,
+        sport = Sport,
+        daddr = Daddr,
+        dport = Dport
+    } = State) ->
+    try dump(State) of
+        _ -> ok
+    catch
+        Type:_Error -> error_logger:error_report([
+                    {session, Type},
+                    {connection, session(Saddr, Sport, Daddr, Dport)}
+                ]),
+            ok
+    end.
 
 code_change(_OldVsn, StateName, State, _Extra) ->
     {ok, StateName, State}.
@@ -126,7 +139,7 @@ perving({data, {SeqNo, Data}}, _From, #state{data = Payload} = State) ->
             }, ?TIMEOUT}
     end;
 perving(stop, _From, State) ->
-    {reply, ok, archiving, State, 0}.
+    {stop, normal, ok, State}.
 
 perving(timeout, #state{
         saddr = Saddr,
@@ -138,25 +151,7 @@ perving(timeout, #state{
             {session, {timeout, ?TIMEOUT}},
             {connection, session(Saddr, Sport, Daddr, Dport)}
         ]),
-    {next_state, archiving, State, 10000}.
-
-archiving(timeout, #state{
-        saddr = Saddr,
-        sport = Sport,
-        daddr = Daddr,
-        dport = Dport
-    } = State) ->
-    try dump(State) of
-        _ -> ok
-    catch
-        throw:Error -> Error;
-        Type:_Error -> error_logger:error_report([
-                    {session, Type},
-                    {connection, session(Saddr, Sport, Daddr, Dport)}
-                ])
-    end,
-
-    {stop, shutdown, State}.
+    {stop, normal, State}.
 
 
 %%--------------------------------------------------------------------
