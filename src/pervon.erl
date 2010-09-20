@@ -59,7 +59,6 @@
         sport,
         daddr,
         dport,
-        f = fun(_) -> ok end,
         timeout = ?TIMEOUT,
         debug = true,
         data
@@ -151,12 +150,6 @@ perving({data, {SeqNo, Data}}, #state{
         data = Payload,
         timeout = Timeout
     } = State) ->
-
-    case Timeout of
-        ?TIMEOUT -> ok;
-        ?TIMEWAIT -> error_logger:info_report([{matched, ?TIMEWAIT}])
-    end,
-
     case gb_trees:is_defined(SeqNo, Payload) of
         true ->
             {next_state, perving, State#state{
