@@ -116,3 +116,15 @@ TODO
 
 * add option to enable/disable debug messages and tracing
 
+* have peep only display images over a certain size
+
+* packets are still sometimes dropped and it can be difficult to track
+  down where. Add a panopticon process when debugging is enabled. The
+  gen_server and gen_fsm will register the session and payload at key
+  points with the panopticon.  The gen_fsm will delete the session,
+  either at init or before writing the file contents. The panopticon
+  process will hold the data in an ets table, along with a timestamp. The
+  only entries should be packets that were dropped for some reason or
+  sessions in flight. The data will be held in an ets table. When the
+  panopticon is not running, the session calls should be a noop.
+
