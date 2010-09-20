@@ -39,20 +39,11 @@
 -export([content/3, session/4]).
 -export([filename/4]).
 % States
--export([perving/2, perving/3]).
+-export([perving/2]).
 % Behaviours
 -export([init/1, handle_event/3, handle_sync_event/4,
         handle_info/3, terminate/3, code_change/4]).
 
--record(state, {
-        saddr,
-        sport,
-        daddr,
-        dport,
-        f = fun(_) -> ok end,
-        debug = true,
-        data
-    }).
 
 -define(FILEPATH, "priv/files").
 -define(TRACEPATH, "priv/tmp/").
@@ -60,16 +51,29 @@
 -define(MAXHDRLEN, 8 * 1024).       % 8K, mimic Apache
 -define(MAXCHUNKLEN, nolimit).      % XXX
 -define(TIMEOUT, 5 * 1000 * 60).    % 5 minutes, HTTP pipeline timeout
+-define(TIMEWAIT, 10 * 1000).       % 10 seconds, allow for delayed
+                                    %  packets when shutting down
+
+-record(state, {
+        saddr,
+        sport,
+        daddr,
+        dport,
+        f = fun(_) -> ok end,
+        timeout = ?TIMEOUT,
+        debug = true,
+        data
+    }).
 
 
 %%--------------------------------------------------------------------
 %%% Interface
 %%--------------------------------------------------------------------
 buf(Pid, SeqNo, Data) when is_binary(Data) ->
-    gen_fsm:sync_send_event(Pid, {data, {SeqNo, Data}}).
+    gen_fsm:send_event(Pid, {data, {SeqNo, Data}}).
 
 stop(Pid) ->
-    gen_fsm:sync_send_event(Pid, stop).
+    gen_fsm:send_event(Pid, stop).
 
 
 %%--------------------------------------------------------------------
@@ -127,30 +131,47 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% States
 %%--------------------------------------------------------------------
-perving({data, {SeqNo, Data}}, _From, #state{data = Payload} = State) ->
+
+% There seems to be a race condition in receiving data/stopping
+% the fsm. Occasionally, data or stop events will be sent after
+% stop has been called.
+%
+% 1. Since events are delivered async, they may be received
+%    out of order. The events could be sent synchronously,
+%    but:
+%
+% 2. The closing FIN packet may be delivered out of order
+%    (in which case the OS will not ACK it) or it may be
+%    a duplicate. 
+%
+% The TIME_WAIT interval should allow enough time for
+% additional events to be processed.
+%
+perving({data, {SeqNo, Data}}, #state{
+        data = Payload,
+        timeout = Timeout
+    } = State) ->
+
+    case Timeout of
+        ?TIMEOUT -> ok;
+        ?TIMEWAIT -> error_logger:info_report([{matched, ?TIMEWAIT}])
+    end,
+
     case gb_trees:is_defined(SeqNo, Payload) of
         true ->
-            {reply, ok, perving, State#state{
+            {next_state, perving, State#state{
                 data = Payload
-            }, ?TIMEOUT};
+            }, Timeout};
         false ->
-            {reply, ok, perving, State#state{
+            {next_state, perving, State#state{
                 data = gb_trees:enter(SeqNo, Data, Payload)
-            }, ?TIMEOUT}
+            }, Timeout}
     end;
-perving(stop, _From, State) ->
-    {stop, normal, ok, State}.
-
-perving(timeout, #state{
-        saddr = Saddr,
-        sport = Sport,
-        daddr = Daddr,
-        dport = Dport
-    } = State) ->
-    error_logger:info_report([
-            {session, {timeout, ?TIMEOUT}},
-            {connection, session(Saddr, Sport, Daddr, Dport)}
-        ]),
+perving(stop, State) ->
+    {next_state, perving, State#state{
+            timeout = ?TIMEWAIT
+        }, ?TIMEWAIT};
+perving(timeout, State) ->
     {stop, normal, State}.
 
 
