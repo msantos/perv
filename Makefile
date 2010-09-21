@@ -1,7 +1,10 @@
 
 REBAR=$(shell which rebar || echo ./rebar)
 
-all: deps compile
+all: dirs deps compile
+
+dirs:
+	@mkdir -p priv/tmp priv/log priv/files/image
 
 deps:
 	@$(REBAR) get-deps
