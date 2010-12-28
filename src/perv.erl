@@ -32,7 +32,7 @@
 -behaviour(gen_server).
 
 -include_lib("inets/src/http_lib/http_internal.hrl").
--include("epcap_net.hrl").
+-include("pkt.hrl").
 
 -define(SERVER, ?MODULE).
 
@@ -88,7 +88,7 @@ handle_cast(_Msg, State) ->
 % Sniffed packet
 handle_info([{pkthdr, {_, {caplen, Length}, {len, Length}}}, {packet, Packet}],
     #state{c = C} = State) ->
-    P = epcap_net:decapsulate(Packet),
+    P = pkt:decapsulate(Packet),
     C1 = match(P, C),
     {noreply, State#state{c = C1}};
 
