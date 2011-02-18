@@ -13,7 +13,7 @@ dirs:
 	@mkdir -p priv/tmp priv/log priv/files/image
 
 deps: $(REBAR)
-	@$(REBAR) get-deps
+	@$(REBAR) check-deps || $(REBAR) get-deps
 
 compile: $(REBAR)
 	@$(REBAR) compile
