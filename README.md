@@ -1,7 +1,9 @@
+# Easily capture media for offline viewing. Your's and possibly everyone else's too.
 
 perv watches the network for web traffic and dumps the content to your
 hard drive. On a hubbed or public wifi network, this includes everyone
-else's web browsing too.
+else's web browsing too. perv works with any media streamed over HTTP
+including Internet radio and streaming video sites like YouTube and InfoQ.
 
 perv is really just a drifnet clone
 (http://www.ex-parrot.com/~chris/driftnet/) written in Erlang but differs
@@ -9,21 +11,21 @@ in that it parses the HTTP response rather than pulling media types out
 of a binary stream.
 
 
-HOW TO BUILD IT
+## HOW TO BUILD IT
 
 1. Get the source code
 
-git clone git://github.com/msantos/perv.git
+    git clone git://github.com/msantos/perv.git
 
 2. Compile perv
 
-make
+    make
 
 
-HOW TO USE IT
+## HOW TO USE IT
 
-perv:start() -> ok
-perv:start(Options) -> ok
+### perv:start() -> ok
+### perv:start(Options) -> ok
 
     Types   Options = [EpcapArgs | Keyword]
             EpcapArgs = list()
@@ -50,7 +52,7 @@ perv:start(Options) -> ok
     trace file can be unpacked by using pervon:content/3.
 
 
-pervon:content(Path, Name, Response) -> ok
+### pervon:content(Path, Name, Response) -> ok
 
     Types   Path = string()
             Name = string()
@@ -67,42 +69,42 @@ pervon:content(Path, Name, Response) -> ok
     "Response" is the HTTP response.
 
 
-peep:start() -> ok
+### peep:start() -> ok
 
 
-EXAMPLES
+## EXAMPLES
 
 * To start sniffing, specify the interface to use:
 
-> perv:start([{interface, "eth0"}]).
+    > perv:start([{interface, "eth0"}]).
 
 
 * By default, all traffic on port 80 is captured. If you want to exclude
   your IP address, modify the pcap filter. For example, if you are using
   the device "en1" with an IP address of "192.168.10.11":
 
-> perv:start([{interface, "en1"}, {filter, "tcp and port 80 and not 192.168.10.11"}]).
+    > perv:start([{interface, "en1"}, {filter, "tcp and port 80 and not 192.168.10.11"}]).
 
 
 * To replay data from a pcap file (for example, captured using tcpdump):
 
-> perv:start([{file, "/path/to/file.pcap"}]).
+    > perv:start([{file, "/path/to/file.pcap"}]).
 
 
 * perv includes a very basic web interface:
 
-> peep:start().
+    > peep:start().
 
 Then open a browser: http://localhost:8889/
 
 
 * To unpack the HTTP response:
 
-> {ok, Response} = file:read_file("priv/tmp/192.168.1.100:80-10.11.11.11:4343-1284292665354797.http").
-> pervon:content("/tmp/content_dir", "suffix", Response).
+    > {ok, Response} = file:read_file("priv/tmp/192.168.1.100:80-10.11.11.11:4343-1284292665354797.http").
+    > pervon:content("/tmp/content_dir", "suffix", Response).
 
 
-TODO
+## TODO
 
 * peep is really ugly, fix it
 
@@ -117,14 +119,3 @@ TODO
 * add option to enable/disable debug messages and tracing
 
 * have peep only display images over a certain size
-
-* packets are still sometimes dropped and it can be difficult to track
-  down where. Add a panopticon process when debugging is enabled. The
-  gen_server and gen_fsm will register the session and payload at key
-  points with the panopticon.  The gen_fsm will delete the session,
-  either at init or before writing the file contents. The panopticon
-  process will hold the data in an ets table, along with a timestamp. The
-  only entries should be packets that were dropped for some reason or
-  sessions in flight. The data will be held in an ets table. When the
-  panopticon is not running, the session calls should be a noop.
-
