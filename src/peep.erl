@@ -1,4 +1,4 @@
-%% Copyright (c) 2010, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2010-2011, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -46,18 +46,13 @@ start() ->
     inets:start(httpd, [
             {modules, [
                     mod_alias,
-                    mod_auth,
                     mod_esi,
-                    mod_actions,
-                    mod_cgi,
-                    mod_dir,
                     mod_get,
-                    mod_head,
                     mod_log,
                     mod_disk_log
                 ]},
             {port, 8889},
-            {server_name, "peepr"},
+            {server_name, "localhost"},
             {server_root, "priv/log"},
             {document_root, "priv/www"},
             {directory_index, ["index.html"]},
