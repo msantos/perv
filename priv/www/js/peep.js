@@ -3,6 +3,7 @@ var peep = function () {
     var json = {};
     var url = "/web/peep:show";
     var MAX = 9;
+    var PLACEHOLDER = "/default.png";
     var slots = _.map(_.range(MAX), function (n) {
             return null;
             });
@@ -20,7 +21,10 @@ var peep = function () {
         },
         'json': function (v) {
             return (v ? json = v : json);
-        }
+        },
+        'placeholder': function () {
+            return (PLACEHOLDER);
+        },
     };
 }();
 
@@ -62,7 +66,8 @@ function redraw(json) {
             });
 
     $.each(nslots, function (n) {
-        set_image(nslots[n], n);
+        var img = nslots[n] ? nslots[n] : peep.placeholder();
+        set_image(img, n);
     });
     peep.slots(nslots);
 }
