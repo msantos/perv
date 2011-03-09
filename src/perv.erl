@@ -86,7 +86,7 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 % Sniffed packet
-handle_info([{pkthdr, {_, {caplen, Length}, {len, Length}}}, {packet, Packet}],
+handle_info([{pkthdr, [_, {caplen, Length}, {len, Length}, _]}, {packet, Packet}],
     #state{c = C} = State) ->
     P = pkt:decapsulate(Packet),
     C1 = match(P, C),
