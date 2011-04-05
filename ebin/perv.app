@@ -1,6 +1,6 @@
 {application, perv, [
     {description, "HTTP content sniffer"},
-        {vsn, "0.01"},
+        {vsn, "0.02"},
         {modules, [
             perv,
             pervon,

@@ -86,8 +86,8 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 % Sniffed packet
-handle_info([{pkthdr, [_, {caplen, Length}, {len, Length}, _]}, {packet, Packet}],
-    #state{c = C} = State) ->
+handle_info({packet, _DLT, _Time, Length, Packet}, #state{c = C} = State)
+    when byte_size(Packet) == Length ->
     P = pkt:decapsulate(Packet),
     C1 = match(P, C),
     {noreply, State#state{c = C1}};
