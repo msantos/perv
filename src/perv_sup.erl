@@ -1,4 +1,4 @@
-%% Copyright (c) 2010-2011, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2010-2012, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -56,4 +56,3 @@ init([]) ->
     {ok, { {one_for_one, 5, 10}, [
                 {tag1, {perv, start_link, []}, permanent, 10000, worker, [perv]}
             ]} }.
-

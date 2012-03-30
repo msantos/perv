@@ -1,4 +1,4 @@
-%% Copyright (c) 2010-2011, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2010-2012, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 -behaviour(gen_server).
 
 -include_lib("inets/src/http_lib/http_internal.hrl").
--include("pkt.hrl").
+-include_lib("pkt/include/pkt.hrl").
 
 -define(SERVER, ?MODULE).
 
